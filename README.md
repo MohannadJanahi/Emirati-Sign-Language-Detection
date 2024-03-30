@@ -16,10 +16,11 @@ When dealing with a small and limited dataset, the best course of action is to u
 ![image](https://github.com/MohannadJanahi/Emirati-Sign-Language-Detection/assets/71018205/338df8bb-d0e4-49a1-b233-b57686e79868)
 
 An accuracy of 99.64% is achieved when using K-fold. The number of data used is now much higher, with 166 cases per class, compared to 16 cases without K-fold. Training this algorithm is generally computationally expensive, and it should ideally be used with a powerful Graphical Processing Unit (GPU).
+
 ![image](https://github.com/MohannadJanahi/Emirati-Sign-Language-Detection/assets/71018205/014747e6-a623-4f62-b7a1-e51479fb5f41)
 
 
-#Future Work
+# Future Work
 
 In a real-world scenario with more than 5000 classes and around a million videos, the selected model in this research might not be the best choice, and transfer learning might perform better, as more classes mean more complexity. Regardless, using the difference of frames algorithm to prepare data for sign language prediction through deep learning is fruitful.
 
