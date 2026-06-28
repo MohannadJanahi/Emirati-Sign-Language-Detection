@@ -78,3 +78,4 @@ Python, MediaPipe, TensorFlow/Keras, NumPy, pandas, FastDTW
 ## References
 
 This project builds on prior work in motion-based gesture detection (difference-of-frames algorithm) and DTW-based sign language recognition using MediaPipe. See citations in the full write-up.
+The dataset is not included for privacy reasons, but the result of running the dataset through the difference of frames algorithm is included for training the CNN.
