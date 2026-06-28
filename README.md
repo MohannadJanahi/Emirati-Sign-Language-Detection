@@ -28,8 +28,7 @@ Self-collected and labeled by me, since no public ESL video dataset exists:
 
 ## Approach 2 — Deep Learning + Difference of Frames
 
-1. Convert each video into a single motion-summary image using the **difference of frames** algorithm: consecutive frames are subtracted from each other and accumulated, collapsing a video into one frame that encodes all the motion in it.
-   - Optimized the reference pseudocode by replacing a nested pixel-loop with NumPy's `where()`, cutting processing time per video from minutes to under 5 seconds.
+1. Convert each video into a single motion-summary image using the **difference of frames** algorithm: consecutive frames are subtracted from each other and accumulated, collapsing a video into one frame that encodes all the motion in it. The reference pseudocode was optimized by replacing a nested pixel-loop with NumPy's `where()`, cutting processing time per video from minutes to under 5 seconds. An example of the output of a difference of frames algorithm is shown below.
 
 <img width="216" height="159" alt="318206868-fbe818ac-9c01-40af-8a30-49b628f28cde" src="https://github.com/user-attachments/assets/f9275c22-ae99-4418-9c66-08d04d288cef" />
 
