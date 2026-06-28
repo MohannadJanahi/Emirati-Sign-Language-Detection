@@ -1,12 +1,12 @@
 # Emirati Sign Language Detection and Translation
 
-Detecting and classifying Emirati Sign Language (ESL) gestures from video, using two different approaches — **Dynamic Time Warping (DTW)** on hand-joint coordinates and **Deep Learning** on motion-summarized frames — built and compared on a custom-collected dataset.
+Detecting and classifying Emirati Sign Language (ESL) gestures from video, using two different approaches: **Dynamic Time Warping (DTW)** on hand-joint coordinates and **Deep Learning** on motion-summarized frames, built and compared on a custom-collected dataset.
 
 ## Problem
 
-ESL is understood by only a small fraction of the UAE population, despite an official dictionary of up to 5,000 signs having existed since 2018. This creates a real communication barrier for the deaf, hard-of-hearing, and mute community. Unlike many sign languages, ESL is highly varied — some signs rely on hand shape, some on movement, some on both, and some use one or two hands — which makes it a harder classification problem than typical sign language datasets in the literature.
+ESL is understood by only a small fraction of the UAE population, despite an official dictionary of up to 5,000 signs having existed since 2018. This creates a real communication barrier for the deaf, hard-of-hearing, and mute community. Unlike many sign languages, ESL is highly varied, as some signs rely on hand shape, some on movement, some on both, and some use one or two hands, which makes it a harder classification problem than typical sign language datasets in the literature.
 
-This project investigates which method — geometric time-series matching (DTW) or learned image classification (CNNs) — is better suited to this kind of variable, motion-heavy sign language, using a small, self-collected dataset as a real-world-sized test case.
+This project investigates which method (geometric time-series matching (DTW) or learned image classification (CNNs)) is better suited to this kind of variable, motion-heavy sign language, using a small, self-collected dataset as a real-world-sized test case.
 
 ## Dataset
 
@@ -24,7 +24,7 @@ Self-collected and labeled by me, since no public ESL video dataset exists:
 
 **Why DTW**: it naturally handles time-series of mismatched length (people sign at different speeds) and works well even with very few examples per class.
 
-**Limitation**: DTW is O(N²), and comparing against the full dataframe took ~3 seconds for 558 rows across 5 classes. That doesn't scale to a real ESL dictionary (5,000+ signs, potentially over a million reference videos) — it's a viable offline/non-real-time method, not a live-translation one.
+**Limitation**: DTW is O(N²), and comparing against the full dataframe took ~3 seconds for 558 rows across 5 classes. That doesn't scale to a real ESL dictionary (5,000+ signs, potentially over a million reference videos). It's a viable offline/non-real-time method, but not a live-translation one.
 
 ## Approach 2 — Deep Learning + Difference of Frames
 
@@ -43,11 +43,11 @@ Self-collected and labeled by me, since no public ESL video dataset exists:
 | Custom CNN + Dropout | 87% | Overfitting onset delayed from epoch ~1 to epoch ~6 |
 | Custom CNN + Dropout + L1 | 90% | L1's sparsity effect helps, since most pixels in the motion images are 0 |
 | Custom CNN + Dropout + L2 | 92% | Best single-split result |
-| **Custom CNN + Dropout + L1 + K-fold (7 folds)** | **99.64%** | Best overall — using K-fold maximizes the effective training data (166 vs. ~16 samples/class), which matters a lot at this dataset size |
+| **Custom CNN + Dropout + L1 + K-fold (7 folds)** | **99.64%** | Best overall. Using K-fold maximizes the effective training data (166 vs. ~16 samples/class), which matters a lot at this dataset size |
 
-**Takeaway**: transfer learning (ResNet-50, VGG-19) underperformed a much simpler custom CNN on this small, low-noise dataset — the pretrained models were too complex for the task and overfit immediately. Regularization (dropout + L1) plus K-fold cross-validation closed almost all of the remaining gap, since the biggest constraint here was dataset size, not model capacity.
+**Takeaway**: transfer learning (ResNet-50, VGG-19) underperformed a much simpler custom CNN on this small, low-noise dataset. The pretrained models were too complex for the task and overfit immediately. Regularization (dropout + L1) plus K-fold cross-validation closed almost all of the remaining gap, since the biggest constraint here was dataset size, not model capacity.
 
-## DTW vs. Deep Learning — Which is better?
+## DTW vs. Deep Learning. Which is better?
 
 - **Deep learning** is the more *practical* choice for production use, since inference is fast.
 - **DTW** is more *robust to extremely small datasets* and doesn't need training at all, but is too slow to scale to a full sign dictionary or live translation.
@@ -56,7 +56,7 @@ Self-collected and labeled by me, since no public ESL video dataset exists:
 ## Known Limitations & Future Work
 
 - **Difference of frames assumes a static background.** Any motion from the body, head, or background will be picked up by the algorithm. A fix proposed but not yet implemented: use MediaPipe Holistic to bound the hand regions and black out everything outside that box before differencing.
-- **DTW only tracks joint position, not joint angle** — so it can't distinguish signs that share a position but differ in finger curl/bend.
+- **DTW only tracks joint position, not joint angle**, so it can't distinguish signs that share a position but differ in finger curl/bend.
 - **Dataset is small** (5 classes) relative to the real ESL dictionary (~5,000 signs). Results here demonstrate feasibility, not production-readiness.
 
 ## How to Run
@@ -65,9 +65,7 @@ Self-collected and labeled by me, since no public ESL video dataset exists:
 pip install -r requirements.txt
 ```
 
-```bash
-python app.py
-```
+For the CNN, run the **Stratified K-Fold Custom NN.ipynb** notebook, making sure to bind your test image to the example variable in the last cell.
 
 Then follow the printed instructions to run inference on a new video using either method.
 
@@ -77,4 +75,4 @@ Python, MediaPipe, TensorFlow/Keras, NumPy, pandas, FastDTW
 
 ## References
 
-This project builds on prior work in motion-based gesture detection (difference-of-frames algorithm) and DTW-based sign language recognition using MediaPipe — see citations in the full write-up.
+This project builds on prior work in motion-based gesture detection (difference-of-frames algorithm) and DTW-based sign language recognition using MediaPipe. See citations in the full write-up.
