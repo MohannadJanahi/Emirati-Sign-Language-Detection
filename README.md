@@ -69,8 +69,6 @@ pip install -r requirements.txt
 
 For the CNN, run the **Stratified K-Fold Custom NN.ipynb** notebook, making sure to bind your test image to the example variable in the last cell.
 
-Then follow the printed instructions to run inference on a new video using either method.
-
 ## Tech Stack
 
 Python, MediaPipe, TensorFlow/Keras, NumPy, pandas, FastDTW
