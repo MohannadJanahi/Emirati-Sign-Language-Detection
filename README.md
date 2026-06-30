@@ -14,8 +14,9 @@ Self-collected and labeled by me, since no public ESL video dataset exists:
 - **5 classes**: hundred, mother, ninety-two, relax, salute
 - **166 video samples per class**
 - ~3 seconds per video at 30 fps (≤90 frames per sample)
+- Note that the dataset is not uploaded for privacy reasons. However, the anonimized difference of frames outputs and the hand movements that were extracted from the videos are available for public use.
 
-## Approach 1 — Dynamic Time Warping (DTW) + MediaPipe
+## Approach 1: Dynamic Time Warping (DTW) + MediaPipe
 
 1. Run Google MediaPipe's holistic hand-tracking model on every video to extract (x, y) coordinates for 21 joints per hand, per frame.
 2. Store each video as a sequence of joint-coordinate arrays in a dataframe.
@@ -26,7 +27,7 @@ Self-collected and labeled by me, since no public ESL video dataset exists:
 
 **Limitation**: DTW is O(N²), and comparing against the full dataframe took ~3 seconds for 558 rows across 5 classes. That doesn't scale to a real ESL dictionary (5,000+ signs, potentially over a million reference videos). It's a viable offline/non-real-time method, but not a live-translation one.
 
-## Approach 2 — Deep Learning + Difference of Frames
+## Approach 2: Deep Learning + Difference of Frames
 
 1. Convert each video into a single motion-summary image using the **difference of frames** algorithm: consecutive frames are subtracted from each other and accumulated, collapsing a video into one frame that encodes all the motion in it. The reference pseudocode was optimized by replacing a nested pixel-loop with NumPy's `where()`, cutting processing time per video from minutes to under 5 seconds. An example of the output of a difference of frames algorithm is shown below.
 
@@ -68,6 +69,8 @@ pip install -r requirements.txt
 ```
 
 For the CNN, run the **Stratified K-Fold Custom NN.ipynb** notebook, making sure to bind your test image to the example variable in the last cell.
+
+For DTW, run the **Sign Language Detection Using DTW.ipynb** notebook. It will capture a video and cross-reference it with the dataset.
 
 ## Tech Stack
 
