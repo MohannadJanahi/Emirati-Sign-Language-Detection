@@ -1,27 +1,82 @@
-# Emirati-Sign-Language-Detection
-Using Deep Learning to Classify Emirati Sign Language.
+# Emirati Sign Language Detection and Translation
 
-This project aims to tackle the problems faced by the population not understanding sign language, by giving a direct translation of each sign made by the speaker. Artificial Intelligence will be used to classify each sign to its respective word.
-The dataset to be used was created by myself. It includes 5 labelled classes (hundred, mother, ninety-two, relax, and salute), with each class having 166 video entries. 
-The dataset is considered small for a real-world application. The number of classes is small, and the number of videos per class can preferably be higher. However, for the goal of this project, it should prove sufficient to see how well the model can deal with such a task and if it can differentiate between the classes. 
+Detecting and classifying Emirati Sign Language (ESL) gestures from video, using two different approaches: **Dynamic Time Warping (DTW)** on hand-joint coordinates and **Deep Learning** on motion-summarized frames, built and compared on a custom-collected dataset.
 
-Neural networks require inputs in the shape of a tensor, such as a 2D image. However, for the case of a time-series data such as a video, it poses a new hurdle. The input will need to be pre-processed in a way that a neural network would be able to accept it. The pre-processing algorithm of choice to convert a video to an image that can be converted to a tensor array, while still retaining information from all frames, is the difference of frames algorithm. This project will utilize the algorithm mentioned above to convert the video instances to photos to be fed to a neural network.
+## Problem
 
-![image](https://github.com/MohannadJanahi/Emirati-Sign-Language-Detection/assets/71018205/fbe818ac-9c01-40af-8a30-49b628f28cde)
+ESL is understood by only a small fraction of the UAE population, despite an official dictionary of up to 5,000 signs having existed since 2018. This creates a real communication barrier for the deaf, hard-of-hearing, and mute community. Unlike many sign languages, ESL is highly varied, as some signs rely on hand shape, some on movement, some on both, and some use one or two hands, which makes it a harder classification problem than typical sign language datasets in the literature.
 
-The above image is an example of a preprocessed video using the difference of frames algorithm (brightened for ease of view)
+This project investigates which method (geometric time-series matching (DTW) or learned image classification (CNNs)) is better suited to this kind of variable, motion-heavy sign language, using a small, self-collected dataset as a real-world-sized test case.
 
-When dealing with a small and limited dataset, the best course of action is to use the K-fold cross-validation algorithm. Rather than splitting the dataset into training, validation, and testing, the entire dataset can be split into K folds. For each iteration, one fold will be used for training, while the remaining folds will be used for cross-validation. This method maximizes the amount of training data and often returns better results on smaller datasets. Theoretically, the best performance will be achieved when the number of folds is equal to the amount of data. However, that would be computationally expensive. The best practice is to use a number between 5 and 10. For the purpose of this project, 7 folds are chosen. Since the difference of frames algorithm returns a lot of dead pixels, it is wise to use L1 regularization to remove unneeded features (pixels). Regularization is applied on the 1st (convolutional) layer and 9th (dense) layer. The dense layer is the most susceptible to large weights due to the huge number of trainable parameters. The model summary is shown below.
+## Dataset
 
-![image](https://github.com/MohannadJanahi/Emirati-Sign-Language-Detection/assets/71018205/338df8bb-d0e4-49a1-b233-b57686e79868)
+Self-collected and labeled by me, since no public ESL video dataset exists:
+- **5 classes**: hundred, mother, ninety-two, relax, salute
+- **166 video samples per class**
+- ~3 seconds per video at 30 fps (≤90 frames per sample)
+- Note that the dataset is not uploaded for privacy reasons. However, the anonimized difference of frames outputs and the hand movements that were extracted from the videos are available for public use.
 
-An accuracy of 99.64% is achieved when using K-fold. The number of data used is now much higher, with 166 cases per class, compared to 16 cases without K-fold. Training this algorithm is generally computationally expensive, and it should ideally be used with a powerful Graphical Processing Unit (GPU).
+## Approach 1: Dynamic Time Warping (DTW) + MediaPipe
 
-![image](https://github.com/MohannadJanahi/Emirati-Sign-Language-Detection/assets/71018205/014747e6-a623-4f62-b7a1-e51479fb5f41)
+1. Run Google MediaPipe's holistic hand-tracking model on every video to extract (x, y) coordinates for 21 joints per hand, per frame.
+2. Store each video as a sequence of joint-coordinate arrays in a dataframe.
+3. For a new input video, extract its joint sequence the same way, then compute DTW distance against every entry in the dataframe.
+4. The lowest-distance match is the predicted sign; a distance threshold is used to reject low-confidence predictions instead of forcing a guess.
 
+**Why DTW**: it naturally handles time-series of mismatched length (people sign at different speeds) and works well even with very few examples per class.
 
-# Future Work
+**Limitation**: DTW is O(N²), and comparing against the full dataframe took ~3 seconds for 558 rows across 5 classes. That doesn't scale to a real ESL dictionary (5,000+ signs, potentially over a million reference videos). It's a viable offline/non-real-time method, but not a live-translation one.
 
-In a real-world scenario with more than 5000 classes and around a million videos, the selected model in this research might not be the best choice, and transfer learning might perform better, as more classes mean more complexity. Regardless, using the difference of frames algorithm to prepare data for sign language prediction through deep learning is fruitful.
+## Approach 2: Deep Learning + Difference of Frames
 
-The difference of frames algorithm has one major flaw, it expects the background to be static. In the dataset, that was true. However, in a practical scenario, that will not always be the case. If the background is not static, then that motion will be captured with the algorithm as well. The same can be said about the person who is performing the hand gestures, as the algorithm expects to capture only hand movement. Any movement of the body or the head will be captured by the algorithm. This can be mitigated by using the Google MediaPipe Holistic model to track the hands, and then draw bounding boxes that cover the range of positions taken by the hand. The difference of frames algorithm can then only be applied within the bounding boxes. Any pixel outside of the bounding boxes can be blacked out. That way, the effect of a dynamic background and noise capture is reduced.
+1. Convert each video into a single motion-summary image using the **difference of frames** algorithm: consecutive frames are subtracted from each other and accumulated, collapsing a video into one frame that encodes all the motion in it. The reference pseudocode was optimized by replacing a nested pixel-loop with NumPy's `where()`, cutting processing time per video from minutes to under 5 seconds. An example of the output of a difference of frames algorithm is shown below.
+
+<img width="216" height="159" alt="318206868-fbe818ac-9c01-40af-8a30-49b628f28cde" src="https://github.com/user-attachments/assets/f9275c22-ae99-4418-9c66-08d04d288cef" />
+
+2. Feed the resulting motion images into a CNN classifier.
+3. Compare multiple architectures to find the best-performing approach for this dataset size.
+
+### Results
+
+| Model | Test Accuracy | Notes |
+|---|---|---|
+| ResNet-50 (transfer learning) | 85% | Overfit quickly; small dataset doesn't suit transfer learning here |
+| VGG-19 (transfer learning) | 85% | Same overfitting pattern as ResNet-50 |
+| Custom CNN (4× conv+maxpool) | 85% | Slight improvement in confusing classes, still overfits |
+| Custom CNN + Dropout | 87% | Overfitting onset delayed from epoch ~1 to epoch ~6 |
+| Custom CNN + Dropout + L1 | 90% | L1's sparsity effect helps, since most pixels in the motion images are 0 |
+| Custom CNN + Dropout + L2 | 92% | Best single-split result |
+| **Custom CNN + Dropout + L1 + K-fold (7 folds)** | **99.64%** | Best overall. Using K-fold maximizes the effective training data (166 vs. ~16 samples/class), which matters a lot at this dataset size |
+
+**Takeaway**: transfer learning (ResNet-50, VGG-19) underperformed a much simpler custom CNN on this small, low-noise dataset. The pretrained models were too complex for the task and overfit immediately. Regularization (dropout + L1) plus K-fold cross-validation closed almost all of the remaining gap, since the biggest constraint here was dataset size, not model capacity.
+
+## DTW vs. Deep Learning. Which is better?
+
+- **Deep learning** is the more *practical* choice for production use, since inference is fast.
+- **DTW** is more *robust to extremely small datasets* and doesn't need training at all, but is too slow to scale to a full sign dictionary or live translation.
+- In practice, the two could complement each other: DTW catches cases where too little data exists to train a class, deep learning handles everything once enough data is collected.
+
+## Known Limitations & Future Work
+
+- **Difference of frames assumes a static background.** Any motion from the body, head, or background will be picked up by the algorithm. A fix proposed but not yet implemented: use MediaPipe Holistic to bound the hand regions and black out everything outside that box before differencing.
+- **DTW only tracks joint position, not joint angle**, so it can't distinguish signs that share a position but differ in finger curl/bend.
+- **Dataset is small** (5 classes) relative to the real ESL dictionary (~5,000 signs). Results here demonstrate feasibility, not production-readiness.
+
+## How to Run
+
+```bash
+pip install -r requirements.txt
+```
+
+For the CNN, run the **Stratified K-Fold Custom NN.ipynb** notebook, making sure to bind your test image to the example variable in the last cell.
+
+For DTW, run the **Sign Language Detection Using DTW.ipynb** notebook. It will capture a video and cross-reference it with the dataset.
+
+## Tech Stack
+
+Python, MediaPipe, TensorFlow/Keras, NumPy, pandas, FastDTW
+
+## References
+
+This project builds on prior work in motion-based gesture detection (difference-of-frames algorithm) and DTW-based sign language recognition using MediaPipe. See citations in the full write-up.
+The dataset is not included for privacy reasons, but the result of running the dataset through the difference of frames algorithm is included for training the CNN.

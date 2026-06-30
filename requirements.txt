@@ -1,0 +1,11 @@
+tensorflow>=2.13.0
+scikit-learn>=1.3.0
+numpy>=1.24.0,<2.0.0
+opencv-python>=4.8.0
+jupyter>=1.0.0
+mediapipe==0.10.21
+pandas>=2.0
+numpy>=1.24,<2.0
+opencv-python>=4.8
+fastdtw>=0.3.4
+scipy>=1.10
